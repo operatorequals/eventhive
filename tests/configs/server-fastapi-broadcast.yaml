@@ -1,0 +1,22 @@
+connectors:
+  {network}:
+    pubsub_type: fastapi
+    input_channel: '{receiver}'
+    channels: ['*']
+    init:
+      host: 127.0.0.1
+      port: 8085
+      endpoint: /pubsub
+
+
+
+servers:
+  {network}:
+    pubsub_type: fastapi
+    init:
+      host: 0.0.0.0
+      port: 8085
+      endpoint: /pubsub
+
+    create: always
+    broadcast: true

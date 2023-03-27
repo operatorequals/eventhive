@@ -1,0 +1,8 @@
+connectors:
+  {network}:
+    pubsub_type: fastapi
+    input_channel: '{receiver}'
+    channels: ['*']
+    init:
+      host: 127.0.0.1
+      port: 8085
