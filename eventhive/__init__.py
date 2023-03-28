@@ -2,25 +2,29 @@
 from hooker import EVENTS, get_event_name, hook, reset, events
 
 # Import config APIs
-from eventhive import config as CONFIG
-from eventhive.config import CONFIG as CONFIG_DICT
-from eventhive.config import PUBSUB_TYPES
+from . import config as CONFIG
+from .config import CONFIG as CONFIG_DICT
+from .config import PUBSUB_TYPES
 
-from eventhive.logger import logger
-import eventhive.connectors.redis as redis_class
-import eventhive.connectors.fastapi_pubsub as fastapi_class
+from .logger import logger
+try:
+    from .connectors import redis as redis_class
+except ImportError:
+    logger.warning("'redis' is not available. If needed, install with 'pip install eventhive[redis]'")
+    redis_class = None
 
-import eventhive.servers.fastapi_srv as fastapi_srv
+from .connectors import fastapi_pubsub as fastapi_class
 
-from eventhive.zeroconf.broadcast import Broadcast, init_from_broadcast
+from .servers import fastapi_srv
+
+from .broadcast import Broadcast, init_from_broadcast
 
 CONNECTORS = {}
-
 SERVERS = {}
 BROADCASTERS = {}
 
 CONNECTOR_CLASS = {
-    'redis': redis_class.RedisConnector,
+    'redis': redis_class.RedisConnector if redis_class != None else None,
     'fastapi': fastapi_class.FastAPIPubSubConnector
 }
 

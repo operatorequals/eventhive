@@ -11,7 +11,7 @@ import socket
 import threading
 import json
 
-from eventhive import logger
+from . import logger
 
 MDNS_TYPE = "_eventhive._tcp.local."
 

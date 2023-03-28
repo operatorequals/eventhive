@@ -2,20 +2,12 @@ import json
 import time
 import uuid
 
-import eventhive.__meta__ as meta
-from eventhive.logger import logger
-from eventhive.connectors import base
-import eventhive
+from ..logger import logger
+from ..connectors import base
 
-
-import redis
-
-logger.setLevel(0)
-
+    
 # Taken from:
 # https://redis.readthedocs.io/en/latest/advanced_features.html#publish-subscribe
-
-
 def exception_handler(ex, pubsub, thread):
     logger.warning("[-] Exception in Subscription thread: [%s]" % ex)
     # thread.daemon = True

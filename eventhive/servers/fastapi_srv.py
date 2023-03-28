@@ -7,7 +7,7 @@ from fastapi_websocket_pubsub import PubSubEndpoint
 
 import threading
 
-from eventhive.logger import logger
+from ..logger import logger
 import logging
 
 for logger_name in ["uvicorn.access", "uvicorn.error"]:

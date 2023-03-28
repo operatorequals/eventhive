@@ -5,7 +5,7 @@ import json
 import argparse
 
 import eventhive
-from eventhive.logger import logger
+from .logger import logger
 import logging
 logger.addHandler(logging.StreamHandler(sys.stderr))
 

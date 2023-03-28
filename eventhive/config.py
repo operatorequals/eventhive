@@ -4,7 +4,7 @@ import os
 
 from mergedeep import merge, Strategy
 
-from eventhive.logger import logger
+from .logger import logger
 
 EVENTHIVE_CONFIG_ENV = "EVENTHIVE_CONFIG"
 EVENTHIVE_SECRET_ENV = "EVENTHIVE_SECRET"

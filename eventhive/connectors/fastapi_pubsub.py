@@ -1,6 +1,7 @@
-from eventhive.logger import logger
-from eventhive.connectors import base
+from ..logger import logger
+from ..connectors import base
 import eventhive
+
 import concurrent.futures
 import threading
 from fastapi_websocket_pubsub import PubSubClient

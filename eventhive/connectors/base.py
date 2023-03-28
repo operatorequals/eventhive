@@ -1,8 +1,8 @@
 import json
 import uuid
 
-from eventhive.logger import logger
-import eventhive.__meta__ as meta
+from ..logger import logger
+from ..__meta__ import __version__
 import eventhive
 
 import time
@@ -35,7 +35,7 @@ class BaseConnector(object):
         logger.debug("[%s] ID assigned to event '%s'" % (id_, event_name))
         ret = {
             "time": time.time(),
-            "version": meta.__version__,
+            "version": __version__,
             "event": event_name,
             "id": id_,
         }
