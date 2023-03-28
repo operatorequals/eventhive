@@ -35,17 +35,28 @@ def init():
     # =========== Servers
 
     for k, v in CONFIG_DICT['servers'].items():
-        if v['broadcast'] == 'true' or v['broadcast']:
-            BROADCASTERS[k] = Broadcast(k,
-                                        v,
-                                        CONFIG_DICT['eventhive'])
-            BROADCASTERS[k].run_in_thread()
+
+        if v['create'] == 'needed':
+            logger.info("Detecting existing server '%s'" % k)
+            init_dict = init_from_broadcast(k)
+            if init_dict is None or init_dict == {}:
+                logger.info("Server '%s' not detected. Creating..." % k)
+                v['create'] = 'always'
 
         if v['create'] == 'always':
             SERVERS[k] = SERVER_CLASS[v['pubsub_type']](
                 k, v, CONFIG_DICT['eventhive'])
 
             SERVERS[k].run_in_thread()
+
+    # =========== Broadcast
+
+            if v['broadcast'] == 'true' or v['broadcast']:
+                BROADCASTERS[k] = Broadcast(k,
+                                            v,
+                                            CONFIG_DICT['eventhive'])
+                BROADCASTERS[k].run_in_thread()
+
 
     # =========== Connectors
 
