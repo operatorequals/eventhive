@@ -15,6 +15,7 @@ from eventhive import logger
 
 MDNS_TYPE = "_eventhive._tcp.local."
 
+
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("1.1.1.1", 80))
@@ -22,6 +23,7 @@ def get_ip():
         return s.getsockname()[0]
     finally:
         s.close()
+
 
 class Broadcast:
 
@@ -46,7 +48,6 @@ class Broadcast:
             properties=init_dict,
         )
 
-
     def run(self):
         logger.info("Broadcasting server '%s'" % self.service_name)
         self.broadcast.register_service(self.info)
@@ -62,14 +63,20 @@ class Broadcast:
 
 
 def init_from_broadcast(connector_id, timeout=5):
-    timeout = timeout * 1000 # Zeroconf expects millis
+    timeout = timeout * 1000  # Zeroconf expects millis
     zc = Zeroconf()
     # print(ZeroconfServiceTypes.find())
-    info = zc.get_service_info(MDNS_TYPE, connector_id + '.' + MDNS_TYPE, timeout=timeout)
+    info = zc.get_service_info(
+        MDNS_TYPE,
+        connector_id +
+        '.' +
+        MDNS_TYPE,
+        timeout=timeout)
     zc.close()
-    if info is None: return None
+    if info is None:
+        return None
     ret = {}
-    for k,v in info.properties.items():
-        ret[str(k,'utf8')] = str(v,'utf8')
+    for k, v in info.properties.items():
+        ret[str(k, 'utf8')] = str(v, 'utf8')
     logger.info("Network '%s' found: %s" % (connector_id, ret))
     return ret

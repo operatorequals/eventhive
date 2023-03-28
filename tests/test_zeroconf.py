@@ -1,6 +1,8 @@
+from importlib import reload
 import atexit
 import unittest
-import sys, os
+import sys
+import os
 import time
 import threading
 import json
@@ -11,8 +13,7 @@ from eventhive.servers.fastapi_srv import FastAPIPubSubServer
 
 import tests
 
-logger.setLevel(0) # DEBUG
-from importlib import reload
+logger.setLevel(0)  # DEBUG
 
 
 class TestEvent(unittest.TestCase):
@@ -25,9 +26,9 @@ class TestEvent(unittest.TestCase):
                 sys.modules.pop(k)
 
     def test_subscription(self, event='',
-    		receiver="receiver", connector='fastapi',
-    		data={'key': 'value'}
-    	):
+                          receiver="receiver", connector='fastapi',
+                          data={'key': 'value'}
+                          ):
         eventhive.CONFIG.read_string(
             """
 connectors:
@@ -42,13 +43,16 @@ connectors:
         eventhive.EVENTS.append(event_name, "test subscription")
 
         sender_thr = threading.Thread(
-	        	target=lambda : eventhive.init() or tests.fire_later(event_name, data)
-        	)
+            target=lambda: eventhive.init() or tests.fire_later(
+                event_name, data))
 
         sender_thr.daemon = True
         sender_thr.start()
 
-        output = tests.call_eventhive_cli(connector, receiver, event,
+        output = tests.call_eventhive_cli(
+            connector,
+            receiver,
+            event,
             "tests/configs/server-fastapi-broadcast.yaml",
             timeout=6)
 
@@ -57,4 +61,5 @@ connectors:
         message = json.loads(output)
         sender_thr.join()
 
-        self.assertTrue(eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)
+        self.assertTrue(
+            eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)

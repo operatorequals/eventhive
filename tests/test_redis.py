@@ -1,6 +1,9 @@
+import docker
+from importlib import reload
 import atexit
 import unittest
-import sys, os
+import sys
+import os
 import time
 import threading
 import json
@@ -10,11 +13,9 @@ from eventhive.logger import logger
 
 import tests
 
-logger.setLevel(0) # DEBUG
-from importlib import reload
+logger.setLevel(0)  # DEBUG
 
 # Setup Docker ==============================
-import docker
 
 DOCKER = docker.from_env()
 REDIS_CONTAINER_NAME = "eventhive-test-redis"
@@ -45,9 +46,9 @@ class TestEvent(unittest.TestCase):
         REDIS_CONTAINER.stop()
 
     def test_subscription(self, event='',
-    		receiver="receiver", connector='redis',
-    		data={'key': 'value'}
-    	):
+                          receiver="receiver", connector='redis',
+                          data={'key': 'value'}
+                          ):
         eventhive.CONFIG.read_string(
             """
 connectors:
@@ -67,28 +68,28 @@ connectors:
         eventhive.init()
 
         sender_thr = threading.Thread(
-	        	target=tests.fire_later,
-	        	args=(event_name, data)
-        	)
+            target=tests.fire_later,
+            args=(event_name, data)
+        )
 
         sender_thr.daemon = True
         sender_thr.start()
         # sender_thr.join()
 
-        output = tests.call_eventhive_cli(connector, receiver, event, "tests/configs/receiver-redis.yaml")
+        output = tests.call_eventhive_cli(
+            connector, receiver, event, "tests/configs/receiver-redis.yaml")
         output = str(output, 'utf8')
-        print("OUTPUT: "+output)
+        print("OUTPUT: " + output)
         message = json.loads(output)
         # sender_thr.join()
 
-        self.assertTrue(eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)
-
-
+        self.assertTrue(
+            eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)
 
     def test_no_metadata(self, event='',
-    		receiver="receiver", connector='redis',
-    		data={'key': 'value'}
-    	):
+                         receiver="receiver", connector='redis',
+                         data={'key': 'value'}
+                         ):
         eventhive.CONFIG.read_string(
             """
 eventhive:
@@ -111,18 +112,20 @@ connectors:
         eventhive.init()
 
         sender_thr = threading.Thread(
-	        	target=tests.fire_later,
-	        	args=(event_name, data)
-        	)
+            target=tests.fire_later,
+            args=(event_name, data)
+        )
 
         sender_thr.daemon = True
         sender_thr.start()
         # sender_thr.join()
 
-        output = tests.call_eventhive_cli(connector, receiver, event, "tests/configs/receiver-redis.yaml")
+        output = tests.call_eventhive_cli(
+            connector, receiver, event, "tests/configs/receiver-redis.yaml")
         output = str(output, 'utf8')
-        print("OUTPUT: "+output)
+        print("OUTPUT: " + output)
         message = json.loads(output)
         # sender_thr.join()
 
-        self.assertTrue(eventhive.CONFIG_DICT['eventhive']['metadata_key'] not in message)
+        self.assertTrue(
+            eventhive.CONFIG_DICT['eventhive']['metadata_key'] not in message)

@@ -1,13 +1,13 @@
 import time
 import eventhive
 
-network_name='my-beehive'
-service_name='queen-bee'
+network_name = 'my-beehive'
+service_name = 'queen-bee'
 
 # YAML configuration can be automatically loaded
 # from 'eventhive.yaml' or programmatically (like below)
 eventhive.CONFIG.read_string(
-"""
+    """
 connectors:
   {}:
     pubsub_type: redis
@@ -30,13 +30,13 @@ connectors:
 # Register remote Events to be handled
 # by the network
 eventhive.EVENTS.append(
-  '{}/worker-bee/work'.format(network_name),
-  help="Order all workers to work"
-  )
+    '{}/worker-bee/work'.format(network_name),
+    help="Order all workers to work"
+)
 eventhive.EVENTS.append(
-  '{}/worker-bee/work-harder'.format(network_name),
-  help="Order all workers to work"
-  )
+    '{}/worker-bee/work-harder'.format(network_name),
+    help="Order all workers to work"
+)
 
 # Initializes connections and all
 eventhive.init()
@@ -44,9 +44,9 @@ eventhive.init()
 # Order all worker bees in 'my-beehive'
 # to work every second
 while True:
-  time.sleep(1)
-  eventhive.EVENTS.call(
-    # Check the wildcard
-    "{}/worker-bee/work*".format(network_name),
-  # Positional Argument for workers
-    {'work':'heavy load'})
+    time.sleep(1)
+    eventhive.EVENTS.call(
+        # Check the wildcard
+        "{}/worker-bee/work*".format(network_name),
+        # Positional Argument for workers
+        {'work': 'heavy load'})

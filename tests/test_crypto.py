@@ -1,6 +1,7 @@
 import atexit
 import unittest
-import sys, os
+import sys
+import os
 import time
 import threading
 import json
@@ -16,6 +17,7 @@ logger.setLevel(logging.DEBUG)
 
 FASTAPI_ADDRESS = ["127.0.0.1", "8085"]
 
+
 class TestEvent(unittest.TestCase):
 
     def tearDown(self):
@@ -26,10 +28,10 @@ class TestEvent(unittest.TestCase):
                 sys.modules.pop(k)
 
     def test_secret(self, event='',
-    		receiver="receiver", connector='fastapi',
-    		data={'key': 'value'},
-            secret='123'
-    	):
+                    receiver="receiver", connector='fastapi',
+                    data={'key': 'value'},
+                    secret='123'
+                    ):
         eventhive.CONFIG.read_string(
             """
 connectors:
@@ -49,27 +51,32 @@ connectors:
         eventhive.init()
 
         sender_thr = threading.Thread(
-	        	target=tests.fire_later,
-	        	args=(event_name, data)
-        	)
+            target=tests.fire_later,
+            args=(event_name, data)
+        )
 
         sender_thr.daemon = True
         sender_thr.start()
 
-        output = tests.call_eventhive_cli(connector, receiver, event, "tests/configs/server-fastapi-secret.yaml", secret=secret)
+        output = tests.call_eventhive_cli(
+            connector,
+            receiver,
+            event,
+            "tests/configs/server-fastapi-secret.yaml",
+            secret=secret)
         output = str(output, 'utf8')
         print("OUTPUT: '%s'" % output)
         message = json.loads(output)
         sender_thr.join()
 
-        self.assertTrue(eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)
-
+        self.assertTrue(
+            eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)
 
     def test_wrong_secret(self, event='',
-            receiver="receiver", connector='fastapi',
-            data={'key': 'value'},
-            secret='123'
-        ):
+                          receiver="receiver", connector='fastapi',
+                          data={'key': 'value'},
+                          secret='123'
+                          ):
         eventhive.CONFIG.read_string(
             """
 connectors:
@@ -89,27 +96,31 @@ connectors:
         eventhive.init()
 
         sender_thr = threading.Thread(
-                target=tests.fire_later,
-                args=(event_name, data)
-            )
+            target=tests.fire_later,
+            args=(event_name, data)
+        )
 
         sender_thr.daemon = True
         sender_thr.start()
 
-        output = tests.call_eventhive_cli(connector, receiver, event, "tests/configs/server-fastapi-secret.yaml", secret=secret)
+        output = tests.call_eventhive_cli(
+            connector,
+            receiver,
+            event,
+            "tests/configs/server-fastapi-secret.yaml",
+            secret=secret)
         output = str(output, 'utf8')
         print("OUTPUT: '%s'" % output)
         message = json.loads(output)
         sender_thr.join()
 
-        self.assertEqual({"no":"output"}, message)
-
+        self.assertEqual({"no": "output"}, message)
 
     def test_no_secret(self, event='',
-            receiver="receiver", connector='fastapi',
-            data={'key': 'value'},
-            secret='123'
-        ):
+                       receiver="receiver", connector='fastapi',
+                       data={'key': 'value'},
+                       secret='123'
+                       ):
         eventhive.CONFIG.read_string(
             """
 connectors:
@@ -128,17 +139,22 @@ connectors:
         eventhive.init()
 
         sender_thr = threading.Thread(
-                target=tests.fire_later,
-                args=(event_name, data)
-            )
+            target=tests.fire_later,
+            args=(event_name, data)
+        )
 
         sender_thr.daemon = True
         sender_thr.start()
 
-        output = tests.call_eventhive_cli(connector, receiver, event, "tests/configs/server-fastapi-secret.yaml", secret=secret)
+        output = tests.call_eventhive_cli(
+            connector,
+            receiver,
+            event,
+            "tests/configs/server-fastapi-secret.yaml",
+            secret=secret)
         output = str(output, 'utf8')
         print("OUTPUT: '%s'" % output)
         message = json.loads(output)
         sender_thr.join()
 
-        self.assertEqual({"no":"output"}, message)
+        self.assertEqual({"no": "output"}, message)

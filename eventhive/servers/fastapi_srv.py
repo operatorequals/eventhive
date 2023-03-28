@@ -14,6 +14,7 @@ for logger_name in ["uvicorn.access", "uvicorn.error"]:
     logging.getLogger(logger_name).handlers.clear()
     logging.getLogger(logger_name).propagate = False
 
+
 class FastAPIPubSubServer:
 
     def __init__(self, connector_id, connector_config, global_config):
@@ -24,14 +25,15 @@ class FastAPIPubSubServer:
         self.host = self.conn_conf['init']['host']
         self.port = self.conn_conf['init']['port']
         endpoint = self.conn_conf['init']['endpoint']
-        self.endpoint = endpoint if endpoint.startswith('/') else '/' + endpoint
+        self.endpoint = endpoint if endpoint.startswith(
+            '/') else '/' + endpoint
 
-        self.app =  FastAPI()
+        self.app = FastAPI()
         router = APIRouter()
         endpoint = PubSubEndpoint()
         endpoint.register_route(router)
         self.app.include_router(router)
-        logger.info("FastAPI PubSub Server '%s' initialized" %   self.conn_id)
+        logger.info("FastAPI PubSub Server '%s' initialized" % self.conn_id)
 
     def run(self):
         uvicorn.run(self.app, host=self.host, port=self.port)

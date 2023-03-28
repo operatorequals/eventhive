@@ -12,8 +12,8 @@ EVENTHIVE_SECRET_ENV = "EVENTHIVE_SECRET"
 EVENTHIVE_CONFIG_FILENAME = "eventhive.yaml"
 
 PUBSUB_TYPES = [
-	'redis',
-  'fastapi',
+    'redis',
+    'fastapi',
 ]
 
 CONFIG_DEFAULTS = """
@@ -70,7 +70,7 @@ connectors: {}
 servers: {}
   # # Connectors with this 'network-name'
   # # can receive configuration for this server
-  # # through 'init.from_broadcast' 
+  # # through 'init.from_broadcast'
   # eventhive-fastapi:
   #   pubsub_type: fastapi
   #   init:
@@ -91,34 +91,41 @@ servers: {}
 
 CONFIG = yaml.safe_load(CONFIG_DEFAULTS)
 
+
 def read_string(yaml_str):
-  global CONFIG
-  new = yaml.safe_load(yaml_str)
-  old = yaml.safe_load(CONFIG_DEFAULTS)
-  # Deep merge giving priority to new settings
-  merge(CONFIG, old, new, strategy=Strategy.REPLACE)
-  # print(CONFIG)
+    global CONFIG
+    new = yaml.safe_load(yaml_str)
+    old = yaml.safe_load(CONFIG_DEFAULTS)
+    # Deep merge giving priority to new settings
+    merge(CONFIG, old, new, strategy=Strategy.REPLACE)
+    # print(CONFIG)
+
 
 def read_file(filename):
-  with open(filename) as f:
-    read_string(f.read())
+    with open(filename) as f:
+        read_string(f.read())
 
-config_filename = os.environ.get(EVENTHIVE_CONFIG_ENV, EVENTHIVE_CONFIG_FILENAME)
+
+config_filename = os.environ.get(
+    EVENTHIVE_CONFIG_ENV,
+    EVENTHIVE_CONFIG_FILENAME)
 
 if os.path.exists(config_filename):
 
-  logger.info("Configuration file found: '%s'. Loading..." % config_filename)
-  read_file(config_filename)
+    logger.info("Configuration file found: '%s'. Loading..." % config_filename)
+    read_file(config_filename)
 
 # Might contain secrets
 # logger.debug("[*] Configuration dict: %s" % CONFIG)
 
 secret_env = os.environ.get(EVENTHIVE_SECRET_ENV, None)
 if secret_env is not None:
-  secrets = secret_env.split()
-  for secrets_tuple in secrets:
-    connector, secret = secrets_tuple.split(':')
-    if connector in CONFIG['connectors']:
-      CONFIG['connectors']['secret'] = secret
-    else:
-      logger.warning("Secret provided for connector '%s' but connector not defined..." % connector)
+    secrets = secret_env.split()
+    for secrets_tuple in secrets:
+        connector, secret = secrets_tuple.split(':')
+        if connector in CONFIG['connectors']:
+            CONFIG['connectors']['secret'] = secret
+        else:
+            logger.warning(
+                "Secret provided for connector '%s' but connector not defined..." %
+                connector)

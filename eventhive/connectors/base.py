@@ -1,4 +1,5 @@
-import json, uuid
+import json
+import uuid
 
 from eventhive.logger import logger
 import eventhive.__meta__ as meta
@@ -8,6 +9,7 @@ import time
 
 import hmac
 import hashlib
+
 
 class BaseConnector(object):
 
@@ -24,8 +26,9 @@ class BaseConnector(object):
             self.global_conf['channel_separator'],
         )
 
-        self.secret = bytes(self.conn_conf.pop('secret', ''),'utf8')
-        if self.secret == '' or not self.secret: self.secret = None
+        self.secret = bytes(self.conn_conf.pop('secret', ''), 'utf8')
+        if self.secret == '' or not self.secret:
+            self.secret = None
 
     def create_metadata(self, event_name):
         id_ = str(uuid.uuid4())
@@ -38,16 +41,24 @@ class BaseConnector(object):
         }
         return ret
 
-
     def _sign(self, message):
-        tosign = bytes(json.dumps(message, indent=0, sort_keys=True, separators=(',', ':')),'utf8')
+        tosign = bytes(
+            json.dumps(
+                message,
+                indent=0,
+                sort_keys=True,
+                separators=(
+                    ',',
+                    ':')),
+            'utf8')
         return hmac.HMAC(self.secret, tosign, 'sha1').hexdigest()
 
     def create_message(self, data, event_name):
-        assert(type(data) == dict)
+        assert (isinstance(data, dict))
         message = data
         if not self.global_conf['remove_metadata']:
-            message[self.global_conf['metadata_key']] = self.create_metadata(event_name)
+            message[self.global_conf['metadata_key']
+                    ] = self.create_metadata(event_name)
             logger.debug("[%s] Data: %s" % (
                 message[self.global_conf['metadata_key']]["id"], message)
             )
@@ -55,18 +66,23 @@ class BaseConnector(object):
             message['__sign__'] = self._sign(message)
         return message
 
-
     def send_to_pubsub(self, message):
         event_name = eventhive.get_event_name()
         # Avoid running this catchall event
         # for events received by current process
         if self.conn_conf['input_channel'] and \
-            event_name.startswith(self.conn_conf['input_channel']):
-            logger.debug("Got event from '%s'. Continuing..." % self.input_pattern)
+                event_name.startswith(self.conn_conf['input_channel']):
+            logger.debug(
+                "Got event from '%s'. Continuing..." %
+                self.input_pattern)
             return
 
         message = self.create_message(message, event_name)
-        id_ = message.get(self.global_conf['metadata_key'],{}).get("id", "N/A")
+        id_ = message.get(
+            self.global_conf['metadata_key'],
+            {}).get(
+            "id",
+            "N/A")
 
         serialized_message = json.dumps(message)
 
@@ -75,30 +91,39 @@ class BaseConnector(object):
         logger.info("[%s] Published at: '%s'" % (id_, event_name))
         logger.debug("[%s] Content: '%s'" % (id_, serialized_message))
 
-
     def read_from_pubsub(self, data, event):
         logger.debug("Received: %s" % data)
         try:
             message = json.loads(data)
         except json.decoder.JSONDecodeError as e:
-            logger.warning("[%s] Got scrambled message: '%s'. Dropping..." % (e, data))
+            logger.warning(
+                "[%s] Got scrambled message: '%s'. Dropping..." %
+                (e, data))
             return
 
         if self.secret is not None:
             signature = message.pop('__sign__', None)
             if signature is None:
-                logger.warning("Secret is set but signature not available. Dropping event: %s" % (event))
+                logger.warning(
+                    "Secret is set but signature not available. Dropping event: %s" %
+                    (event))
                 return
 
             toverify = self._sign(message)
-            logger.debug("Signature: %s, calculated: %s" % (signature, toverify))
+            logger.debug(
+                "Signature: %s, calculated: %s" %
+                (signature, toverify))
             valid_signature = hmac.compare_digest(toverify, signature)
             if not valid_signature:
-                logger.warning("Invalid signature. Dropping event: %s" % (event))
+                logger.warning(
+                    "Invalid signature. Dropping event: %s" %
+                    (event))
                 return
 
         try:
-            metadata = message.get(self.global_conf['metadata_key'], {'id':'N/A'})
+            metadata = message.get(
+                self.global_conf['metadata_key'], {
+                    'id': 'N/A'})
             mid = metadata["id"]
             logger.info("[%s] Received Event: '%s'" % (mid, event))
             logger.debug("[%s] Received data '%s'" % (mid, message))
@@ -113,7 +138,8 @@ class BaseConnector(object):
 
         # this function runs only for subscribed channel
         # Remove the Connector ID from the event name
-        event = event[len(self.conn_id+self.global_conf['channel_separator']) :]
+        event = event[len(self.conn_id +
+                          self.global_conf['channel_separator']):]
         logger.info("[%s] Firing event '%s'" % (mid, event))
 
         return eventhive.EVENTS.call(event, message)
