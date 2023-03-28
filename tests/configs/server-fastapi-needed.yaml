@@ -1,0 +1,18 @@
+connectors:
+  {network}:
+    pubsub_type: fastapi
+    input_channel: '{receiver}'
+    channels: ['*']
+    secret: 'ch@ng3m3!'
+    from_broadcast: true
+
+servers:
+  {network}:
+    pubsub_type: fastapi
+    init:
+      host: 0.0.0.0
+      port: 8085
+      endpoint: /pubsub
+
+    create: needed
+    broadcast: true
