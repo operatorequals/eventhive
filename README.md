@@ -105,17 +105,17 @@ and network message passing engine at the same time. This convention is based on
 The *Events* are split in 3 categories following a naming convention:
 
 ### Strictly Local Events
-Like `bee_stuff` in the first example. These Events cannot be called from the network.
+Like [`bee_stuff`](https://github.com/operatorequals/eventhive/blob/master/examples/single_process.py#L3) in the single-process example. These Events cannot be called from the network.
 They have to be defined (`eventhive.append("bee_stuff")`), implemented (`@eventhive.hook("bee_stuff")`) and
 called (`eventhive.EVENTS["bee_stuff"]("arg")`) in the same process.
 
-### Local Network Accessible Events
-Like Worker Bee's `worker-bee/relax`. These Events have to be defined and implemented by the same process,
-but they can be called either from the same process (`eventhive.EVENTS["worker-bee/relax"]({"random":"dict"})`), or
+### Network Accessible Events
+Like Worker Bee's [`worker-bee/work`](https://github.com/operatorequals/eventhive/blob/master/examples/different_hosts/worker.py#L40). These Events have to be defined and implemented by the same process,
+but they can be called either from the same process (`eventhive.EVENTS["worker-bee/work"]({"random":"dict"})`), or
 by any other `eventhive` process in the network as a *Remote Event*.
 
 ### Remote Events
-Like Queen Bee's `my-beehive/worker-bee/work`. These Events are not implemented in the process they are
+Like Queen Bee's [`my-beehive/worker-bee/work`](https://github.com/operatorequals/eventhive/blob/master/examples/different_hosts/boss.py#L33). These Events are not implemented in the process they are
 defined (`eventhive.append("my-beehive/worker-bee/work")`). Calling these Events
 (`eventhive.EVENTS["my-beehive/worker-bee/work"]({"random":"dict"})`) informs `eventhive` that they
 have to travel over `my-beehive` network and get published to the `my-beehive/worker-bee/work` channel.
