@@ -7,29 +7,16 @@ from .config import CONFIG as CONFIG_DICT
 from .config import PUBSUB_TYPES
 
 from .logger import logger
-try:
-    from .connectors import redis as redis_class
-except ImportError:
-    logger.warning("'redis' is not available. If needed, install with 'pip install eventhive[redis]'")
-    redis_class = None
-
-from .connectors import fastapi_pubsub as fastapi_class
 
 from .servers import fastapi_srv
-
 from .broadcast import Broadcast, init_from_broadcast
 
 CONNECTORS = {}
 SERVERS = {}
 BROADCASTERS = {}
 
-CONNECTOR_CLASS = {
-    'redis': redis_class.RedisConnector if redis_class != None else None,
-    'fastapi': fastapi_class.FastAPIPubSubConnector
-}
-
 SERVER_CLASS = {
-    'fastapi': fastapi_srv.FastAPIPubSubServer
+    'fastapi': fastapi_srv.FastAPIPubSubServer,
 }
 
 
@@ -80,8 +67,19 @@ def init():
                     continue
                 v['init'] = init_dict
 
-            CONNECTORS[k] = CONNECTOR_CLASS[v['pubsub_type']](
-                k, v, CONFIG_DICT['eventhive'])
+            if v['pubsub_type'] == 'redis':
+                from .connectors import redis as redis_class
+                connector_class = redis_class.RedisConnector
+            elif v['pubsub_type'] == 'fastapi':
+                from .connectors import fastapi_pubsub as fastapi_class
+                connector_class = fastapi_class.FastAPIPubSubConnector
+            else:
+                logger.error("PubSub backend: '%s' is not recognised in connector '%s'. Moving to next connector." % (
+                    v['pubsub_type'], k))
+                continue
+
+            CONNECTORS[k] = connector_class(k, v, CONFIG_DICT['eventhive'])
+
         except Exception as e:
             logger.error("%s: Could not connect to PubSub '%s'" % (e, k))
             continue

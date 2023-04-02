@@ -5,7 +5,8 @@ import uuid
 from ..logger import logger
 from ..connectors import base
 
-    
+import redis
+
 # Taken from:
 # https://redis.readthedocs.io/en/latest/advanced_features.html#publish-subscribe
 def exception_handler(ex, pubsub, thread):
