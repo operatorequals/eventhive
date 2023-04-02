@@ -38,7 +38,6 @@ connectors:
   %s:
     pubsub_type: fastapi
     input_channel: ''
-    channels: ['*']
     init:
       host: %s
       port: %s
@@ -83,7 +82,6 @@ connectors:
   %s:
     pubsub_type: fastapi
     input_channel: ''
-    channels: ['*']
     init:
       host: %s
       port: %s
@@ -127,7 +125,6 @@ connectors:
   %s:
     pubsub_type: fastapi
     input_channel: ''
-    channels: ['*']
     init:
       host: %s
       port: %s

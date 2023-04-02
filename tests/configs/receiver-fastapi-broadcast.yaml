@@ -2,5 +2,4 @@ connectors:
   {network}:
     pubsub_type: fastapi
     input_channel: '{receiver}'
-    channels: ['*']
     from_broadcast: true

@@ -35,7 +35,6 @@ connectors:
   %s:
     pubsub_type: fastapi
     input_channel: ''
-    channels: ['*']
     from_broadcast: true # <---
 """ % (connector))
         event = tests.get_function_name()

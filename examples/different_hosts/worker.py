@@ -11,7 +11,6 @@ eventhive.CONFIG.read_string(
 connectors:
   {}:
     pubsub_type: redis
-    channels: '*' # Send all events to redis
     init:
       host: 127.0.0.1
       port: 6379

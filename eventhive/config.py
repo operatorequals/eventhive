@@ -55,11 +55,6 @@ connectors: {}
 
     # input_channel: ''
 
-    # A list of suffixes of the channels to Publish Events to.
-    # Wildcard stands for '<channel_tag>/*'.
-    # channels:
-      #   - '*'
-
     # # If set to non-empty, eventhive will
     # # use the key to sign messages sent.
     # # Additionally, all unsigned messages

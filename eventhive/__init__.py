@@ -88,8 +88,11 @@ def init():
             logger.error("%s: Could not connect to PubSub '%s'" % (e, k))
             continue
 
-        CONNECTORS[k]._publishers[k] = hook(
-            CONFIG_DICT['connectors'][k]['channels'])(
+        # connector_events = events('*/*')
+        # logger.debug("Events that follow pattern '%s/*/*' (%s) will be emitted for connector %s" % (k, connector_events, k))
+        # CONNECTORS[k]._publishers[k] = hook(connector_events)(
+        #     lambda message: CONNECTORS[k].send_to_pubsub(message))
+        CONNECTORS[k]._publishers[k] = hook(['*'])(
             lambda message: CONNECTORS[k].send_to_pubsub(message))
 
     if CONNECTORS == {}:

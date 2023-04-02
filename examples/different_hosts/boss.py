@@ -11,7 +11,6 @@ eventhive.CONFIG.read_string(
 connectors:
   {}:
     pubsub_type: redis
-    channels: '*' # Send all events to redis
     init:
       # All keyword arguments named after the Redis Client object __init__
       # are supported (ref: https://redis.readthedocs.io/en/latest/connections.html#generic-client)

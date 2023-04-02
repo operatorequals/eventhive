@@ -29,7 +29,6 @@ It can be used in IoT Development, to Games, to Kubernetes and microservices!
     my-hive:
       pubsub_type: fastapi
       input_channel: 'worker'
-      channels: ['*']
       init:
         host: 127.0.0.1
         port: 8085
@@ -60,7 +59,6 @@ It can be used in IoT Development, to Games, to Kubernetes and microservices!
     my-hive:
       pubsub_type: fastapi
       input_channel: 'queen'
-      channels: ['*']
       init:
         host: 127.0.0.1
         port: 8085
