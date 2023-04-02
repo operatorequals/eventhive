@@ -6,9 +6,11 @@ from ..__meta__ import __version__
 import eventhive
 
 import time
+import base64
 
 import hmac
 import hashlib
+from ..crypto import sign, verify, encrypt, decrypt, create_aes_key, create_aes_obj
 
 
 class BaseConnector(object):
@@ -27,8 +29,14 @@ class BaseConnector(object):
         )
 
         self.secret = bytes(self.conn_conf.pop('secret', ''), 'utf8')
-        if self.secret == '' or not self.secret:
+        if self.secret == b'' or not self.secret:
             self.secret = None
+            self._key = None
+            self._crypto = None
+        else:
+            crypto_obj = create_aes_obj(self.secret)
+            self._key = crypto_obj['key']
+            self._crypto = crypto_obj['obj']
 
     def create_metadata(self, event_name):
         id_ = str(uuid.uuid4())
@@ -41,18 +49,6 @@ class BaseConnector(object):
         }
         return ret
 
-    def _sign(self, message):
-        tosign = bytes(
-            json.dumps(
-                message,
-                indent=0,
-                sort_keys=True,
-                separators=(
-                    ',',
-                    ':')),
-            'utf8')
-        return hmac.HMAC(self.secret, tosign, 'sha1').hexdigest()
-
     def create_message(self, data, event_name):
         assert (isinstance(data, dict))
         message = data
@@ -62,9 +58,13 @@ class BaseConnector(object):
             logger.debug("[%s] Data: %s" % (
                 message[self.global_conf['metadata_key']]["id"], message)
             )
+        mid = message.get(self.global_conf['metadata_key'], {}).get(
+            "id",
+            "N/A")
         if self.secret:
-            message['__sign__'] = self._sign(message)
-        return message
+            message['__sign__'] = sign(self._key, message)
+            message = encrypt(self._key, message, aes_obj=self._crypto)
+        return mid, message
 
     def send_to_pubsub(self, message):
         event_name = eventhive.get_event_name()
@@ -77,12 +77,7 @@ class BaseConnector(object):
                 self.input_pattern)
             return
 
-        message = self.create_message(message, event_name)
-        id_ = message.get(
-            self.global_conf['metadata_key'],
-            {}).get(
-            "id",
-            "N/A")
+        id_, message = self.create_message(message, event_name)
 
         serialized_message = json.dumps(message)
 
@@ -95,10 +90,16 @@ class BaseConnector(object):
         logger.debug("Received: %s" % data)
         try:
             message = json.loads(data)
+            message = decrypt(self._key, message, aes_obj=self._crypto)
         except json.decoder.JSONDecodeError as e:
             logger.warning(
-                "[%s] Got scrambled message: '%s'. Dropping..." %
+                "[%s] Could not decode JSON from message: '%s'. Dropping..." %
                 (e, data))
+            return
+        except UnicodeDecodeError as ude:
+            logger.warning(
+                "[%s] Could not decrypt message '%s'. Dropping..." %
+                (ude, data))
             return
 
         if self.secret is not None:
@@ -109,11 +110,7 @@ class BaseConnector(object):
                     (event))
                 return
 
-            toverify = self._sign(message)
-            logger.debug(
-                "Signature: %s, calculated: %s" %
-                (signature, toverify))
-            valid_signature = hmac.compare_digest(toverify, signature)
+            valid_signature = verify(self._key, message, signature)
             if not valid_signature:
                 logger.warning(
                     "Invalid signature. Dropping event: %s" %
