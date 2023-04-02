@@ -47,7 +47,7 @@ class RedisConnector(base.BaseConnector):
 
     def subscribe(self):
         self.PUBSUB = self.REDIS.pubsub(ignore_subscribe_messages=True)
-        logger.info("[+] Redis PubSub enabled")
+        logger.info("Redis PubSub enabled")
         self.PUBSUB.psubscribe(
             **{
                 self.input_pattern + "*":
@@ -65,6 +65,7 @@ class RedisConnector(base.BaseConnector):
     def stop(self):
         if self.pusbsub_thread:
             self.pusbsub_thread.stop()
+        self.REDIS.close()
 
     def read_from_pubsub(self, message, event=None):
         event = message['channel']
