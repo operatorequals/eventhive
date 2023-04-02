@@ -1,11 +1,11 @@
-import asyncio
 import uvicorn
 from fastapi import FastAPI
 from fastapi.routing import APIRouter
 
 from fastapi_websocket_pubsub import PubSubEndpoint
 
-import threading
+import threading, multiprocessing
+import contextlib
 
 from ..logger import logger
 import logging
@@ -21,6 +21,7 @@ class FastAPIPubSubServer:
         self.conn_id = connector_id
         self.conn_conf = connector_config
         self.global_conf = global_config
+        
 
         self.host = self.conn_conf['init']['host']
         self.port = self.conn_conf['init']['port']
@@ -33,15 +34,17 @@ class FastAPIPubSubServer:
         endpoint = PubSubEndpoint()
         endpoint.register_route(router)
         self.app.include_router(router)
+        self.uvicorn_config = uvicorn.Config(self.app, host=self.host, port=self.port)
+        self.uvicorn_server = uvicorn.Server(config=self.uvicorn_config)
+
         logger.info("FastAPI PubSub Server '%s' initialized" % self.conn_id)
 
     def run(self):
-        uvicorn.run(self.app, host=self.host, port=self.port)
+        self.uvicorn_server.run()
 
     def stop(self):
-        pass
+        self.process.terminate()
 
     def run_in_thread(self):
-        self.thread = threading.Thread(target=self.run)
-        self.thread.daemon = True
-        self.thread.start()
+        self.process = multiprocessing.Process(target=self.run)
+        self.process.start()
