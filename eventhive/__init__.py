@@ -1,5 +1,9 @@
 # Inherit hooker API
 from hooker import EVENTS, get_event_name, hook, reset, events
+from hooker import logger as hooker_logger
+
+import logging
+hooker_logger.handlers = [logging.NullHandler()]
 
 # Import config APIs
 from . import config as CONFIG
