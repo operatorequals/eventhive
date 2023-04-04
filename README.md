@@ -10,7 +10,7 @@ Network PubSub and Async Message Passing for Humans
 `eventhive` is a Python package that enables Python code to communicate using
 Publisher/Subscriber model uniformly, be it in the same process or in different hosts!
 
-Supports external PubSub backends (like Redis), Service Discovery (using [python-zeroconf](https://github.com/python-zeroconf/python-zeroconf/)) and Secure Message Signing.
+Supports external PubSub backends (like Redis), Service Discovery (using [python-zeroconf](https://github.com/python-zeroconf/python-zeroconf/)) and application level Message Signing and Encryption (using [Python Native AES](https://github.com/boppreh/aes)).
 
 
 ## What does it do?
@@ -120,9 +120,93 @@ have to travel over `my-beehive` network and get published to the `my-beehive/wo
 
 Other `eventhive` processes that are connected to `my-beehive` and have `input_channel: worker-bee` in their configuration, pick up these Events, ditch the *Network Name* (`my-beehive/worker-bee/work` becomes `worker-bee/work`) and consume them like *Local Events*.
 
+
+## Message Examples
+
+`eventhive` events are simple JSON messages that can have metadata attached or not.
+In the examples below metadata will be available under the key `__eventhive__`. Disabling metadata or changing the key name
+can be configured through the [YAML configuration](https://github.com/operatorequals/eventhive/blob/master/eventhive/config.py#L20).
+
+### No `secret` set - plaintext messages
+
+```python
+eventhive.EVENTS.call("my-hive/worker/action", {"param1":1, "param2":2})
+```
+
+```json
+{"param1": 1, "param2": 2, "__eventhive__": {"time": 1680610165.4884348, "version": "0.3.2", "event": "my-hive/worker/action", "id": "d891d47f-64a4-4ecc-88ab-69249da31154"}}
+```
+
+`eventhive` metadata can be used from a hooked function for accessing event creation time, version checking and duplicate message checking.
+Yet, it is planned to move some of these functionalities to the library.
+
+Turning off metadata (i.e `eventhive.remove_metadata: true`) can save bandwidth, e.g in very limited IoT networks.
+
+### With `secret` set
+
+Setting a [`secret`](https://github.com/operatorequals/eventhive/blob/master/eventhive/config.py#L63) in a `connector` in the YAML configuration automatically enables AES Encryption and Message Signing. *This is totally transparent to the hooked function*, which will continue to accept events like the one described above.
+Yet, the messages travelling through the network will look as below:
+
+```json
+{"iv": "2SH5S8J75afKxr76osauow==", "ciphertext": "JFJvaixp9/8oiYaxrCS+yA6TkCKlX85g0qG0GlZa8eaQTuXf1Ot33yiIIr7Y+fsFTzL7kzOtFbaq1uO6QH54N9oyeWUi7rDelQi2HNZGYRJCqwtwAbFX4+D8IgBGqYkYGPKuiUZCLRvPArPmaMh8PpMrq4/nEOGf0ivyS9hKEVb9KSrm4+VedAfBMQfpxP3Z/cm/jpj2sKDb9rfcjWATEcQToQ/U4PP40mUGeDpKbmyTAxGLdGAp3jDcghkAM76nDAXmTpuP0PN7YpSp/3cRAiweXxuBszIdeLuoUBOa"}
+```
+
+The `ciphertext` encapsulates messages like the one shown above, plus the `__sign__` key, which is used to verify the plaintext content and is stripped from the final message.
+
+In case decryption or signature verification fails, the event gets dropped and does not arrive to the hooked functions.
+
+Finally, if `secret` is set for a connector, it is impossible to accept non-encrypted, non-signed messages.
+
 ## The CLI Tool
 
+A CLI tool is part of the `eventhive` package to make it possible to test YAML configurations, without writing application code (and adding moving parts to the test).
+
+The output of the tool is the last `eventhive` message that was received in JSON, or `{"no":"output"}` if no message is received.
+
+It uses YAML configuration and also can template YAML files, using the similar named arguments provided through CLI, as shown below:
+
 ```bash
-python -m eventhive.cli --help
+eventhive-cli --network my-hive --receiver worker --secret m1s3cr3t --config fastapi-template.yaml
+```
+
+`fastapi-template.yaml`:
+```yaml
+connectors:
+  {network}:
+    pubsub_type: fastapi
+    input_channel: '{receiver}'
+    secret: '{secret}'
+    init:
+      host: 127.0.0.1
+      port: 8085
+      endpoint: /pubsub
+```
+
+
+### CLI Usage
+
+```bash
+$ eventhive-cli -h
+usage: eventhive-cli [-h] [--network NETWORK] [--receiver RECEIVER] [--event EVENT] [--json-data JSON_DATA] [--target-event TARGET_EVENT] [--json-fallback JSON_FALLBACK]
+                     [--config CONFIG] [--timeout TIMEOUT] [--secret SECRET] [--debug] [--verbose]
+
+The Swiss-Army knife for Eventhive
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --network NETWORK     The Eventhive Network of Events (<here>/*/*) (default: eventhive)
+  --receiver RECEIVER   The Eventhive Channel of Events (*/<here>/*) (default: cli)
+  --event EVENT         The Eventhive Event Name (*/*/<here>) (default: do)
+  --json-data JSON_DATA
+                        If set - the JSON will be sent to "<network>/<receiver>/<event>" (default: False)
+  --target-event TARGET_EVENT
+                        If set - the JSON defined in "--json-data" will be published on it instead of "<network>/<receiver>/<event>" (default: None)
+  --json-fallback JSON_FALLBACK
+                        The JSON to print to STDOUT if no data is received in "<network>/<receiver>/<event>" (default: {"no":"output"})
+  --config CONFIG       The Configuration file to be used by Eventhive (can include formatting) (default: .eventhive-config.yaml)
+  --timeout TIMEOUT     Time to run before exiting and printing to STDOUT (default: 6)
+  --secret SECRET       A secret string used for signing and encryption of messages (default: None)
+  --debug, -d           When set - full DEBUG logs will be printed (default: 30)
+  --verbose, -v         When set - INFO logs will be printed (default: None)
 
 ```
