@@ -20,6 +20,8 @@ def _dict_to_json_bytes(message):
 
 
 def sign(secret, message, algo='sha1'):
+    if isinstance(secret, str):
+        secret = bytes(secret, 'utf8')
     tosign = _dict_to_json_bytes(message)
     return hmac.HMAC(secret, tosign, algo).hexdigest()
 

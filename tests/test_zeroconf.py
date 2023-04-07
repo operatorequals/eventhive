@@ -6,6 +6,7 @@ import os
 import time
 import threading
 import json
+import logging
 
 import eventhive
 from eventhive.logger import logger
@@ -13,7 +14,7 @@ from eventhive.servers.fastapi_srv import FastAPIPubSubServer
 
 import tests
 
-logger.setLevel(0)  # DEBUG
+logger.setLevel(logging.DEBUG)  # DEBUG
 
 
 class TestEvent(unittest.TestCase):
@@ -26,7 +27,7 @@ class TestEvent(unittest.TestCase):
                 sys.modules.pop(k)
 
     def test_subscription(self, event='',
-                          receiver="receiver", connector='fastapi',
+                          receiver="receiver", connector='fastapi-simple',
                           data={'key': 'value'}
                           ):
         eventhive.CONFIG.read_string(
@@ -62,3 +63,82 @@ connectors:
 
         self.assertTrue(
             eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)
+
+    def test_signed_broadcast(self,
+                              receiver="receiver", connector='fastapi',
+                              data={'key': 'value'}, secret='as3cr3t'
+                              ):
+        eventhive.CONFIG.read_string(
+            """
+connectors:
+  %s:
+    pubsub_type: fastapi
+    input_channel: ''
+    from_broadcast: true # <---
+    secret: '%s'
+""" % (connector, secret))
+        event = tests.get_function_name()
+        event_name = "%s/%s/%s" % (connector, receiver, event)
+        eventhive.EVENTS.append(event_name, "signed_broadcast")
+
+        sender_thr = threading.Thread(
+            target=lambda: eventhive.init() or tests.fire_later(
+                event_name, data))
+
+        sender_thr.daemon = True
+        sender_thr.start()
+
+        output = tests.call_eventhive_cli(
+            connector,
+            receiver,
+            event,
+            "tests/configs/server-fastapi-broadcast-secret.yaml",
+            secret=secret,
+            timeout=6)
+
+        output = str(output, 'utf8')
+        print("OUTPUT: '%s'" % output)
+        message = json.loads(output)
+        sender_thr.join()
+
+        self.assertTrue(
+            eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)
+
+
+    def test_signed_broadcast_wrong(self,
+                              receiver="receiver", connector='fastapi',
+                              data={'key': 'value'}, secret='as3cr3t'
+                              ):
+        eventhive.CONFIG.read_string(
+            """
+connectors:
+  %s:
+    pubsub_type: fastapi
+    input_channel: ''
+    from_broadcast: true # <---
+    secret: '%s123' # <--- different secret
+""" % (connector, secret))
+        event = tests.get_function_name()
+        event_name = "%s/%s/%s" % (connector, receiver, event)
+        eventhive.EVENTS.append(event_name, "badly_signed_broadcast")
+
+        sender_thr = threading.Thread(
+            target=lambda: eventhive.init() or tests.fire_later(
+                event_name, data))
+
+        sender_thr.daemon = True
+        sender_thr.start()
+
+        output = tests.call_eventhive_cli(
+            connector,
+            receiver,
+            event,
+            "tests/configs/server-fastapi-broadcast-secret.yaml",
+            secret=secret,
+            timeout=6)
+
+        output = str(output, 'utf8')
+        print("OUTPUT: '%s'" % output)
+        message = json.loads(output)
+        sender_thr.join()
+        self.assertEqual({"no": "output"}, message)

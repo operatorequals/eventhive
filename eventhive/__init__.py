@@ -1,19 +1,16 @@
+from .broadcast import Broadcast, init_from_broadcast
+from .servers import fastapi_srv
+from .logger import logger
+from .config import PUBSUB_TYPES
+# Import config APIs
+from .config import CONFIG as CONFIG_DICT
+from . import config as CONFIG
 # Inherit hooker API
 from hooker import EVENTS, get_event_name, hook, reset, events
 from hooker import logger as hooker_logger
 
 import logging
 hooker_logger.handlers = [logging.NullHandler()]
-
-# Import config APIs
-from . import config as CONFIG
-from .config import CONFIG as CONFIG_DICT
-from .config import PUBSUB_TYPES
-
-from .logger import logger
-
-from .servers import fastapi_srv
-from .broadcast import Broadcast, init_from_broadcast
 
 CONNECTORS = {}
 SERVERS = {}
@@ -33,7 +30,7 @@ def init():
 
         if v['create'] == 'needed':
             logger.info("Detecting existing server '%s'" % k)
-            init_dict = init_from_broadcast(k)
+            init_dict = init_from_broadcast(k, secret=v.get('secret', None))
             if init_dict is None or init_dict == {}:
                 logger.info("Server '%s' not detected. Creating..." % k)
                 v['create'] = 'always'
@@ -52,7 +49,6 @@ def init():
                                             CONFIG_DICT['eventhive'])
                 BROADCASTERS[k].run_in_thread()
 
-
     # =========== Connectors
 
     for k, v in CONFIG_DICT['connectors'].items():
@@ -63,7 +59,7 @@ def init():
                 if isinstance(v['from_broadcast'], int):
                     timeout = v['from_broadcast']
                 logger.info("Initializing '%s' from Broadcast" % k)
-                init_dict = init_from_broadcast(k, timeout=timeout)
+                init_dict = init_from_broadcast(k, timeout=timeout, secret=v.get('secret', None))
                 if init_dict is None or init_dict == {}:
                     logger.error(
                         "Connector '%s' could not be initialized with 'from_broadcast'" %
