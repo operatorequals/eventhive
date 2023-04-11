@@ -22,6 +22,15 @@ SERVER_CLASS = {
     'fastapi': fastapi_srv.FastAPIPubSubServer,
 }
 
+def register(event, function, dependencies=None, expand=True):
+    return hook(event)(function, expand=expand)
+
+def hook(event, dependencies=None, expand=True):
+    # Test if event (can be 'str' or 'iterable')
+    # is totally included in created events)
+    if set(event) == set(events("**")) & set(event):
+        EVENTS.append(event)
+    return hooker_hook(event, dependencies=dependencies, expand=expand)
 
 def init():
     CONFIG_DICT = CONFIG.CONFIG  # renew the config state
