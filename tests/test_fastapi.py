@@ -1,31 +1,17 @@
-from importlib import reload
-import atexit
-import unittest
-import sys
-import os
-import time
-import threading
 import json
+import logging
 
 import eventhive
 from eventhive.logger import logger
-from eventhive.servers.fastapi_srv import FastAPIPubSubServer
 
 import tests
 
-logger.setLevel(0)  # DEBUG
+logger.setLevel(logging.DEBUG)  # DEBUG
 
 FASTAPI_ADDRESS = ["127.0.0.1", "8085"]
 
 
-class TestEvent(unittest.TestCase):
-
-    def tearDown(self):
-        time.sleep(1)
-        eventhive.stop()
-        for k in list(sys.modules.keys()):
-            if k.startswith('eventhive'):
-                sys.modules.pop(k)
+class TestEvent(tests.TestEventhive):
 
     def test_subscription(self, event='',
                           receiver="receiver", connector='fastapi',
@@ -47,20 +33,12 @@ connectors:
 
         eventhive.init()
 
-        sender_thr = threading.Thread(
-            target=tests.fire_later,
-            args=(event_name, data)
-        )
-
-        sender_thr.daemon = True
-        sender_thr.start()
+        self.sender_thr = tests.fire_later_thread_start(event_name, data)
 
         output = tests.call_eventhive_cli(
             connector, receiver, event, "tests/configs/server-fastapi.yaml")
-        output = str(output, 'utf8')
         print("OUTPUT: '%s'" % output)
         message = json.loads(output)
-        sender_thr.join()
 
         self.assertTrue(
             eventhive.CONFIG_DICT['eventhive']['metadata_key'] in message)
@@ -88,20 +66,12 @@ connectors:
 
         eventhive.init()
 
-        sender_thr = threading.Thread(
-            target=tests.fire_later,
-            args=(event_name, data)
-        )
-
-        sender_thr.daemon = True
-        sender_thr.start()
+        self.sender_thr = tests.fire_later_thread_start(event_name, data)
 
         output = tests.call_eventhive_cli(
             connector, receiver, event, "tests/configs/server-fastapi.yaml")
-        output = str(output, 'utf8')
         print("OUTPUT: " + output)
         message = json.loads(output)
-        sender_thr.join()
 
         self.assertTrue(
             eventhive.CONFIG_DICT['eventhive']['metadata_key'] not in message)
