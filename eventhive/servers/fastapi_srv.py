@@ -32,7 +32,7 @@ class FastAPIPubSubServer:
         self.app = FastAPI()
         router = APIRouter()
         endpoint = PubSubEndpoint()
-        endpoint.register_route(router)
+        endpoint.register_route(router, path=self.endpoint)
         self.app.include_router(router)
         self.uvicorn_config = uvicorn.Config(self.app, host=self.host, port=self.port)
         self.uvicorn_server = uvicorn.Server(config=self.uvicorn_config)
