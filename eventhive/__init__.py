@@ -32,7 +32,7 @@ def hook(event, dependencies=None, expand=True):
         EVENTS.append(event)
     return hooker_hook(event, dependencies=dependencies, expand=expand)
 
-def init():
+def init(required=[]):
     CONFIG_DICT = CONFIG.CONFIG  # renew the config state
 
     # =========== Servers
@@ -86,14 +86,16 @@ def init():
                 from .connectors import fastapi_pubsub as fastapi_class
                 connector_class = fastapi_class.FastAPIPubSubConnector
             else:
-                logger.error("PubSub backend: '%s' is not recognised in connector '%s'. Moving to next connector." % (
+                logger.error("PubSub backend: '%s' is not recognised in connector '%s'." % (
                     v['pubsub_type'], k))
-                continue
+                raise KeyError("%s not in %s" % (v['pubsub_type'], PUBSUB_TYPES))
 
             CONNECTORS[k] = connector_class(k, v, CONFIG_DICT['eventhive'])
 
         except Exception as e:
             logger.error("%s: Could not connect to PubSub '%s'" % (e, k))
+            if k in required:
+                raise ConnectorInitializationException("Connector '%s' is required." % k)
             continue
 
         # connector_events = events('*/*')
