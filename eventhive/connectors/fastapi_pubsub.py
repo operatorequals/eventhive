@@ -93,6 +93,3 @@ class FastAPIPubSubConnector(base.BaseConnector):
 
     async def read_from_pubsub(self, message, channel=None):
         super().read_from_pubsub(message, channel)
-
-    def stop(self):
-        pass

@@ -63,6 +63,7 @@ class RedisConnector(base.BaseConnector):
         return self.REDIS.pubsub_channels(pattern)
 
     def stop(self):
+        super().stop()
         if self.pusbsub_thread:
             self.pusbsub_thread.stop()
         self.REDIS.close()

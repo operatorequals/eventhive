@@ -8,9 +8,8 @@ import eventhive
 import time
 import base64
 
-import hmac
-import hashlib
 from ..crypto import sign, verify, encrypt, decrypt, create_aes_key, create_aes_obj
+from ..utils.threads import ConsumerDaemon
 
 
 class BaseConnector(object):
@@ -27,6 +26,9 @@ class BaseConnector(object):
             self.conn_conf['input_channel'],
             self.global_conf['channel_separator'],
         )
+
+        self._event_consumer = ConsumerDaemon(self.publish)
+        self._event_consumer.start()
 
         self.secret = bytes(self.conn_conf.pop('secret', ''), 'utf8')
         if self.secret == b'' or not self.secret:
@@ -81,7 +83,8 @@ class BaseConnector(object):
 
         serialized_message = json.dumps(message)
 
-        self.publish(serialized_message, event_name)
+        self._event_consumer.put(serialized_message, event_name)
+        # self.publish(serialized_message, event_name)
 
         logger.info("[%s] Published at: '%s'" % (id_, event_name))
         logger.debug("[%s] Content: '%s'" % (id_, serialized_message))
@@ -140,3 +143,6 @@ class BaseConnector(object):
         logger.info("[%s] Firing event '%s'" % (mid, event))
 
         return eventhive.EVENTS.call(event, message)
+
+    def stop(self):
+        self._event_consumer.join()
