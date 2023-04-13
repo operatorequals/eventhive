@@ -27,9 +27,9 @@ def call_eventhive_cli(network, receiver, event, config, timeout=6, secret=''):
         "--secret", secret,
         "--debug",
     ]
-    process = subprocess.run(comm, check=False, capture_output=True)
     print()
     print("==> " + " ".join(comm))
+    process = subprocess.run(comm, check=False, capture_output=True)
     print(str(process.stderr, 'utf8'))
     print()
     return str(process.stdout, 'utf8').strip()
