@@ -12,13 +12,6 @@ import sys
 import json
 
 
-sys.path.append(
-    os.path.abspath(
-        os.path.join(
-            os.path.basename(__file__),
-            "..")))
-
-
 class FastAPIPubSubConnector(base.BaseConnector):
 
     _publishers = {}
@@ -58,6 +51,7 @@ class FastAPIPubSubConnector(base.BaseConnector):
                 '{}' if data is None else data,
                 channel=topic))
         self.SUBSCRIBER.start_client(self.url)
+        await self.SUBSCRIBER.wait_until_ready()
 
     def subscribe(self, channels=[]):
         logger.info("FastAPI PubSub enabled")
@@ -68,8 +62,10 @@ class FastAPIPubSubConnector(base.BaseConnector):
              self.global_conf['channel_separator'],
              c) for c in channels]
         self.SUBSCRIBER_LOOP = asyncio.new_event_loop()
-        asyncio.run_coroutine_threadsafe(self._subscriber_async(channels),
-                                         self.SUBSCRIBER_LOOP)
+        # asyncio.get_event_loop().run_until_complete(self._subscriber_async(channels))
+        asyncio.run_coroutine_threadsafe(
+            self._subscriber_async(channels),
+            loop=self.SUBSCRIBER_LOOP)
         self.SUBSCRIBER_THREAD = threading.Thread(
             target=self.SUBSCRIBER_LOOP.run_forever)
         self.SUBSCRIBER_THREAD.daemon = True
