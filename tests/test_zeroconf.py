@@ -1,5 +1,6 @@
 import json
 import logging
+import tracemalloc
 
 import eventhive
 from eventhive.logger import logger
@@ -25,7 +26,7 @@ connectors:
 """ % (connector))
         event = tests.get_function_name()
         event_name = "%s/%s/%s" % (connector, receiver, event)
-        eventhive.EVENTS.append(event_name, "test subscription")
+        eventhive.EVENTS.append(event_name, event)
 
         self.sender_thr = tests.fire_later_thread_start(
             event_name, data, init=True)

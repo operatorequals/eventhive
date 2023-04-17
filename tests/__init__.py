@@ -4,11 +4,12 @@ import subprocess
 import logging
 import threading
 import unittest
+from importlib import reload
 
+from eventhive import logger
 import eventhive
 import time
 
-from eventhive import logger
 
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stderr))
@@ -35,26 +36,24 @@ def call_eventhive_cli(network, receiver, event, config, timeout=6, secret=''):
     return str(process.stdout, 'utf8').strip()
 
 
-def fire_later(event, data, timeout=3, expand=False):
+def fire_later(event, data, timeout=3, expand=False, init=False):
     time.sleep(timeout)
+    if init:
+        eventhive.init()
     eventhive.EVENTS.call(event, data, expand=expand)
     print("[Sender] Event '%s' sent %s" % (
         event,
         "- with expansion" if expand else "")
     )
+    if init:
+        eventhive.stop()
 
 
 def fire_later_thread_start(event, data, timeout=3, expand=False, init=False):
-    if not init:
-        sender_thr = threading.Thread(
-            target=fire_later,
-            args=(event, data, timeout, expand)
-        )
-    else:
-        sender_thr = threading.Thread(
-            target=lambda: eventhive.init() or fire_later(
-                event, data, timeout, expand)
-        )
+    sender_thr = threading.Thread(
+        target=fire_later,
+        args=(event, data, timeout, expand, init)
+    )
 
     sender_thr.daemon = True
     sender_thr.start()
@@ -69,8 +68,10 @@ class TestEventhive(unittest.TestCase):
 
     def tearDown(self):
         self.sender_thr.join()
-        time.sleep(1)
+        # eventhive.CONFIG.CONFIG.read_string("")
         eventhive.stop()
+        reload(eventhive)
+        time.sleep(1)
         # for k in list(sys.modules.keys()):
         #     if k.startswith('eventhive'):
         #         sys.modules.pop(k)
