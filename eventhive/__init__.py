@@ -58,7 +58,8 @@ def init(required=[]):
                 BROADCASTERS[k] = Broadcast(k,
                                             v,
                                             CONFIG_DICT['eventhive'])
-                BROADCASTERS[k].run_in_thread()
+                BROADCASTERS[k].run()
+                # BROADCASTERS[k].run_in_thread()
 
 
     # =========== Connectors
@@ -113,9 +114,14 @@ def init(required=[]):
 
 
 def stop():
+    global SERVERS, CONNECTORS, BROADCASTERS
+    EVENTS.clear()
     for k, v in CONNECTORS.items():
         v.stop()
     for k, v in SERVERS.items():
         v.stop()
     for k, v in BROADCASTERS.items():
         v.stop()
+    CONNECTORS = {}
+    SERVERS = {}
+    BROADCASTERS = {}
